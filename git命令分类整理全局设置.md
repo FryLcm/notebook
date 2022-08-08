@@ -292,202 +292,53 @@ git branch --set-upstream-to=origin/branch_name1 branch_name2：将远程的bran
 git checkout -t origin/branch_name 将远程的branch_name分支拉取到本地
 ```
 
-
-
-# 租云服务器
-
-
-
-### 登录到新服务器
-
+# github的使用
+1、本地配置用户名和邮箱（如果已经设置好，跳过该步）：
 ```
-ssh root@xxx.xxx.xxx.xxx  # xxx.xxx.xxx.xxx替换成新服务器的公网IP
+git config --global user.name "你的用户名"
+git config --global user.email "你的邮箱"
 ```
 
-### 创建acs用户
+2、github上添加ssh公钥
+打开Github，进入Settings：
+![](images/2022-08-08-15-47-46.png)
+点击左边的 SSH and GPG keys ，将ssh key粘贴到右边的Key里面。Title随便命名即可。
+![](images/2022-08-08-15-48-16.png)
+点击下面的 Add SSH key 就添加成功了。
+测试一下吧，执行`ssh -T git@github.com`：
+![](images/2022-08-08-15-48-50.png)
+这样就成功了！
 
-```
-adduser acs  # 创建用户acs
+3、创建远程仓库
+首先是在右上角点击进入创建界面：
+![](images/2022-08-08-15-49-40.png)
+接着输入远程仓库名：
+![](images/2022-08-08-15-49-50.png)
+点击 `Create repository` 就创建好了。其他选项可以暂时不管。
 
-usermod -aG sudo acs  # 给用户acs分配sudo权限
+4、将远程仓库和本地仓库关联起来
+![](images/2022-08-08-15-52-23.png)
+运行 `git remote add origin 你复制的地址`
 
-```
+如果你在创建 repository 的时候，加入了 README.md 或者 LICENSE ，那么 github 会拒绝你的 push 。你需要先执行 `git pull origin master`。
 
-### 配置免密登录方式
+执行 `git push -u origin master` 将本地仓库上传至Github的仓库并进行关联：
 
-#### 配置文件
+关联已经完成！
 
-创建文件` ~/.ssh/config`。
+以后想在commit后同步到Github上，只要直接执行 git push 就行啦：
 
-然后在文件中输入：
 
-```
-Host myserver1
-    HostName IP地址或域名
-    User 用户名
 
-Host myserver2
-    HostName IP地址或域名
-    User 用户名
-```
 
-之后再使用服务器时，可以直接使用别名myserver1、myserver2。
 
-#### 密钥登录
 
-创建密钥：
 
-```
-ssh-keygen
-```
 
-然后一直回车即可。
 
-执行结束后，`~/.ssh/`目录下会多两个文件：
 
-    id_rsa：私钥
-    id_rsa.pub：公钥
-之后想免密码登录哪个服务器，就将公钥传给哪个服务器即可。
 
-例如，想免密登录myserver服务器。则将公钥中的内容，复制到myserver中的~/.ssh/authorized_keys文件里即可。
 
-也可以使用如下命令一键添加公钥：
-
-```
-ssh-copy-id myserver
-```
-
-
-
-### 配置新服务器的工作环境
-
-将AC Terminal的配置传到新服务器上：
-
-```
-scp .bashrc .vimrc .tmux.conf server_name:  # server_name需要换成自己配置的别名
-```
-
-### 安装tmux和docker
-
-登录自己的服务器，然后安装`tmux`：
-
-```
-sudo apt-get update 每次配置环境前运行一下
-
-sudo apt-get install tmux
-```
-
-打开tmux。（养成好习惯，所有工作都在tmux里进行，防止意外关闭终端后，工作进度丢失）
-
-然后在tmux中根据docker安装教程安装docker即可。
-
-
-
-# 在云服务器中安装docker
-
-第一步
-
-```
- sudo apt-get update
-
- sudo apt-get install \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release
-```
-
-第二步
-
-```
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-```
-
-第三步
-
-```
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-```
-
-第四步
-
-```
-sudo apt-get update
-
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-
-```
-
-第五步
-
-```
-docker --version  看docker版本号，基本上能看到版本号就说明安装好了
-
-```
-
-此时云服务器基本配置完成。可以再`sudo apt-get install tree `,以后就可以用tree命令。
-
-如果不小心把云服务器玩坏了，可以点击实例，先停止这个实例，再找到更换操作系统，就是重装系统。
-
-
-
-
-
-# docker一般步骤
-
-docker包在下面这里
-
-```
-cd /var/lib/acwing
-```
-
-### 将当前用户添加到docker用户组
-
-为了避免每次使用docker命令都需要加上sudo权限，可以将当前用户加入安装中自动创建的docker用户组：
-
-```
-sudo usermod -aG docker $USER
-
-```
-
-### 镜像（images）
-
-    docker pull ubuntu:20.04：拉取一个镜像
-    docker images：列出本地所有镜像
-    docker image rm ubuntu:20.04 或 docker rmi ubuntu:20.04：删除镜像ubuntu:20.04
-    docker [container] commit CONTAINER IMAGE_NAME:TAG：创建某个container的镜像
-    docker save -o ubuntu_20_04.tar ubuntu:20.04：将镜像ubuntu:20.04导出到本地文件ubuntu_20_04.tar中
-    docker load -i ubuntu_20_04.tar：将镜像ubuntu:20.04从本地文件ubuntu_20_04.tar中加载出来
-
-### 容器(container)
-
-    docker [container] create -it ubuntu:20.04：利用镜像ubuntu:20.04创建一个容器。
-    docker ps -a：查看本地的所有容器
-    docker ps：查看正在运行的所有容器
-    docker [container] start CONTAINER：启动容器,这里包括下面的***CONTAINER***可以是容器的ID，也可以是名称。
-    docker [container] stop CONTAINER：停止容器
-    docker [container] restart CONTAINER：重启容器
-    docker [contaienr] run -itd ubuntu:20.04：创建并启动一个容器
-    	例：docker run -p 20000:22 -p 8000:8000 --name django_server -itd django_lesson:1.0
-    docker [container] attach CONTAINER：进入容器
-        先按Ctrl-p，再按Ctrl-q可以挂起容器
-        Ctrl-d,是退出并关掉容器
-    docker [container] exec CONTAINER COMMAND：在容器中执行命令
-    docker [container] rm CONTAINER：删除容器
-    docker container prune：删除所有已停止的容器
-    docker export -o xxx.tar CONTAINER：将容器CONTAINER导出到本地文件xxx.tar中
-    docker import xxx.tar image_name:tag：将本地文件xxx.tar导入成镜像，并将镜像命名为image_name:tag
-    docker export/import与docker save/load的区别：
-        export/import会丢弃历史记录和元数据信息，仅保存容器当时的快照状态
-        save/load会保存完整记录，体积更大
-    docker top CONTAINER：查看某个容器内的所有进程
-    docker stats：查看所有容器的统计信息，包括CPU、内存、存储、网络等信息
-    docker cp xxx CONTAINER:xxx 或 docker cp CONTAINER:xxx xxx：在本地和容器间复制文件
-    docker rename CONTAINER1 CONTAINER2：重命名容器
-    docker update CONTAINER --memory 500MB：修改容器限制
 
 
 
